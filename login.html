@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Vinculum</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Vinculum</h1>
+    <nav>
+      <a href="index.html">Início</a>
+      <a href="servicos.html">Serviços</a>
+      <a href="contato.html">Contato</a>
+      <a href="adicionar.html">Adicionar Serviço</a>
+      <a href="login.html">Login</a>
+      <a href="cadastro.html">Cadastro</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="form-container">
+      <h2>Login</h2>
+      <form id="form-login">
+        <label>Email: <input type="email" id="login-email" required></label>
+        <label>Senha: <input type="password" id="login-senha" required></label>
+
+        <label>Tipo de usuário:</label>
+        <select id="login-tipo" required>
+          <option value="">Selecione</option>
+          <option value="cliente">Cliente</option>
+          <option value="prestador">Prestador de Serviços</option>
+        </select>
+
+        <button type="submit">Entrar</button>
+      </form>
+      <p id="resposta-login"></p>
+      <p>Não tem conta? <a href="cadastro.html">Cadastre-se aqui</a></p>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Vinculum</p>
+  </footer>
+</body>
+</html>
