@@ -30,6 +30,7 @@ import {
   ExternalLink,
   Image as ImageIcon,
   Trash2,
+  ArrowLeft,
 } from "lucide-react";
 
 /* =================== Home Page =================== */
@@ -37,9 +38,7 @@ function HomePage() {
   return (
     <div className="mx-auto max-w-5xl px-4 pb-24 pt-0 md:pb-8">
       <HeroSection />
-      <div className="-mt-6">
-        <SearchBar />
-        <CategoryChips />
+      <div className="mt-6 md: mt -8">
         <PromoCarousel />
         <QuickTiles />
       </div>
@@ -801,6 +800,7 @@ function Services({ session }) {
 
   return (
     <div className="mx-auto max-w-5xl px-4 pb-28 pt-4 md:pb-8">
+      {/* A busca permanece na página de serviços */}
       <SearchBar value={query} onChange={(e) => setQuery(e.target.value)} />
       <PromoCarousel />
 
@@ -1501,18 +1501,35 @@ function PublicProfile() {
 }
 
 // ---------- Layout ----------
+function FloatingNavButtons() {
+  const navigate = useNavigate();
+  return (
+    <div className="fixed top-4 left-4 z-50 flex gap-2">
+      <Link
+        to="/"
+        className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-600 text-white shadow-lg transition hover:scale-110 hover:bg-amber-700"
+        title="Ir para a Home"
+      >
+        <Home className="h-5 w-5" />
+      </Link>
+      <button
+        onClick={() => navigate(-1)}
+        className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-800 shadow-lg ring-1 ring-gray-200 transition hover:scale-110 hover:bg-gray-50"
+        title="Voltar página"
+      >
+        <ArrowLeft className="h-5 w-5" />
+      </button>
+    </div>
+  );
+}
+
 function PageLayout({ session, onLogout, children }) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 pb-16 md:pb-0">
       <AppBar session={session} />
 
-      {/* Botão de casinha (voltar à home) */}
-      <Link
-        to="/"
-        className="fixed top-4 left-4 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-amber-600 text-white shadow-lg transition hover:scale-110 hover:bg-amber-700"
-      >
-        <Home className="h-5 w-5" />
-      </Link>
+      {/* Botões flutuantes: Home + Voltar */}
+      <FloatingNavButtons />
 
       <main>{children}</main>
       <BottomTabs session={session} />
