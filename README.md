@@ -41,7 +41,7 @@ Framer Motion (animações sutis)
 lucide-react (ícones)
 localStorage (persistência do MVP)
 
-🚀 Como rodar
+## 🚀 Como rodar
 
 1. Clonar
 
@@ -50,20 +50,17 @@ cd vinculum
 
 2. Instalar dependências
 
-npm install
-# ou
-yarn
+npm install ou yarn
 
 3. Rodar em dev
 
-npm run dev
-# abra o endereço mostrado no terminal (ex.: http://localhost:5173)
+npm run dev -> abra o endereço mostrado no terminal (ex.: http://localhost:5173)
 
 > Se estiver iniciando do zero com Vite: npm create vite@latest, escolha React, depois instale Tailwind e as libs citadas.
 
 ---
 
-👤 Usuários de teste (Seeds)
+## 👤 Usuários de teste (Seeds)
 
 Ao iniciar, o app cria usuários e serviços exemplo:
 
@@ -80,9 +77,7 @@ Paciente Demo — paciente@demo.com / 123
 
 > Após login como prestador, você verá Editar e Excluir nos seus serviços.
 
----
-
-🗂️ Estrutura (simplificada)
+## 🗂️ Estrutura (simplificada)
 
 src/main.jsx — App completo (rotas, páginas, componentes e lógica do MVP)
 
@@ -90,17 +85,14 @@ src/index.css — Tailwind (geral)
 
 > Por ser MVP, centralizamos tudo no main.jsx para velocidade. Em produção, recomendável separar em módulos/páginas/hooks.
 
----
 
-🔒 Regras de Acesso
+## 🔒 Regras de Acesso
 
 Adicionar/Editar/Excluir serviço: apenas Prestador logado dono do serviço.
 
 Contato: somente para usuário logado (cliente ou prestador).
 
----
-
-🧪 Fluxos principais
+## 🧪 Fluxos principais
 
 Prestador:
 
@@ -121,10 +113,7 @@ Cliente:
 2. Visualiza perfis públicos
 
 3. Faz login para entrar em contato
-
----
-
-🧭 Decisões de MVP
+## 🧭 Decisões de MVP
 
 Persistência em localStorage (sem backend)
 
@@ -134,9 +123,7 @@ Slugs para perfis públicos (URLs legíveis)
 
 Design mobile-first com navegação simples (home, tabs, botões flutuantes)
 
----
-
-🗺️ Roadmap (próximos passos)
+## 🗺️ Roadmap (próximos passos)
 
 API real (login seguro, perfis, serviços, contatos)
 
@@ -152,8 +139,6 @@ Acessibilidade (WAI-ARIA) e i18n
 
 SEO (metatags dinâmicas) e sitemap
 
----
-
-⚠️ Aviso Legal
+## ⚠️ Aviso Legal
 
 Este projeto é um protótipo educacional. Não substitui orientação médica, nem lida com dados sensíveis de forma adequada para produção.
