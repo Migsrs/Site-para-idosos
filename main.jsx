@@ -31,6 +31,7 @@ import {
   Image as ImageIcon,
   Trash2,
   ArrowLeft,
+  Pencil,
 } from "lucide-react";
 
 /* =================== Home Page =================== */
@@ -38,7 +39,7 @@ function HomePage() {
   return (
     <div className="mx-auto max-w-5xl px-4 pb-24 pt-0 md:pb-8">
       <HeroSection />
-      <div className="mt-6 md: mt -8">
+      <div className="mt-6 md:mt-8">
         <PromoCarousel />
         <QuickTiles />
       </div>
@@ -47,7 +48,7 @@ function HomePage() {
 }
 
 /*
-  Vinculum — MVP estilo marketplace para contratação de assistentes geriátricos
+  Vinculum — MVP marketplace para contratação de assistentes geriátricos
   Visual mobile-first e amigável
 */
 
@@ -308,21 +309,6 @@ function ProfileMenu({ session, onLogout }) {
   );
 }
 
-function SettingsIcon(props) {
-  return (
-    <svg
-      {...props}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <circle cx="12" cy="12" r="3"></circle>
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1.5.9l-.1.17a2 2 0 0 1-3.8 0l-.1-.17a1.65 1.65 0 0 0-1.5-.9 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.9-1.5l-.17-.1a2 2 0 0 1 0-3.8l.17-.1A1.65 1.65 0 0 0 4.6 9c.36.26.6.67.9 1.5l.17.1a2 2 0 0 1 0 3.8l-.17.1a1.65 1.65 0 0 0-.9 1.5z"></path>
-    </svg>
-  );
-}
-
 // =================== AppBar ===================
 function AppBar({ session }) {
   return (
@@ -404,7 +390,7 @@ function HeroSection() {
   return (
     <div className="relative mb-6 overflow-hidden rounded-3xl">
       <img
-        src="img/cuidador.jpg"
+        src="https://images.unsplash.com/photo-1584017911766-d451b5dcbb49?q=80&w=1600&auto=format&fit=crop"
         alt="Cuidados"
         className="h-60 w-full object-cover md:h-72"
       />
@@ -456,29 +442,6 @@ function PromoCarousel() {
           Somente esta semana • Profissionais verificados
         </div>
       </div>
-    </div>
-  );
-}
-
-function CategoryChips() {
-  const chips = [
-    "Domicílio",
-    "Teleassistência",
-    "Medicação",
-    "Prevenção de quedas",
-    "Acompanhamento",
-    "Orientação",
-  ];
-  return (
-    <div className="no-scrollbar mb-4 flex gap-2 overflow-x-auto pb-1">
-      {chips.map((c) => (
-        <button
-          key={c}
-          className="whitespace-nowrap rounded-full border border-gray-200 bg-white px-4 py-2 text-sm shadow-sm"
-        >
-          {c}
-        </button>
-      ))}
     </div>
   );
 }
@@ -769,7 +732,7 @@ function Services({ session }) {
     if (!current) writeLS(LS_KEYS.services, services);
   }, []);
 
-  // handler de exclusão (apenas do dono)
+  // excluir (apenas dono)
   const handleDelete = (id) => {
     const list = readLS(LS_KEYS.services, []);
     const svc = list.find((s) => s.id === id);
@@ -800,7 +763,6 @@ function Services({ session }) {
 
   return (
     <div className="mx-auto max-w-5xl px-4 pb-28 pt-4 md:pb-8">
-      {/* A busca permanece na página de serviços */}
       <SearchBar value={query} onChange={(e) => setQuery(e.target.value)} />
       <PromoCarousel />
 
@@ -817,6 +779,7 @@ function Services({ session }) {
               session={session}
               canDelete={session?.email === s.ownerEmail}
               onDelete={() => handleDelete(s.id)}
+              allowManage={true}
             />
           ))}
         </div>
@@ -833,7 +796,13 @@ function Services({ session }) {
   );
 }
 
-function ServiceCard({ service, session, canDelete = false, onDelete = null }) {
+function ServiceCard({
+  service,
+  session,
+  canDelete = false,
+  onDelete = null,
+  allowManage = false, // se false (página pública), não mostra Editar/Excluir
+}) {
   const provider = getUserByEmail(service.ownerEmail);
   const isOwner = canDelete && session?.email === service.ownerEmail;
 
@@ -885,15 +854,28 @@ function ServiceCard({ service, session, canDelete = false, onDelete = null }) {
             <div className="rounded-xl bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-700 whitespace-nowrap">
               R$ {service.hourlyPrice}/h
             </div>
-            {isOwner && onDelete && (
-              <button
-                onClick={onDelete}
-                className="rounded-xl bg-red-50 px-3 py-1 text-sm font-semibold text-red-700 hover:bg-red-100 flex items-center gap-1"
-                title="Excluir serviço"
-              >
-                <Trash2 className="h-4 w-4" />
-                Excluir
-              </button>
+
+            {allowManage && isOwner && (
+              <>
+                <Link
+                  to={`/edit-service/${service.id}`}
+                  className="rounded-xl bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700 hover:bg-blue-100 flex items-center gap-1"
+                  title="Editar serviço"
+                >
+                  <Pencil className="h-4 w-4" />
+                  Editar
+                </Link>
+                {onDelete && (
+                  <button
+                    onClick={onDelete}
+                    className="rounded-xl bg-red-50 px-3 py-1 text-sm font-semibold text-red-700 hover:bg-red-100 flex items-center gap-1"
+                    title="Excluir serviço"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Excluir
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -920,9 +902,15 @@ function ServiceCard({ service, session, canDelete = false, onDelete = null }) {
         </div>
 
         <div className="mt-4">
-          <Link to="/contacts">
-            <Button className="w-full">Entrar em contato</Button>
-          </Link>
+          {session ? (
+            <Link to="/contacts">
+              <Button className="w-full">Entrar em contato</Button>
+            </Link>
+          ) : (
+            <Link to="/login">
+              <Button className="w-full">Entrar em contato</Button>
+            </Link>
+          )}
         </div>
       </div>
     </div>
@@ -971,91 +959,171 @@ function AddService({ session }) {
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-4 md:pb-8">
       <h2 className="mb-2 text-2xl font-bold">Adicionar serviço</h2>
-      <Card>
-        <form onSubmit={onSubmit} className="grid gap-4">
-          <div>
-            <label className="text-sm text-gray-700">Título</label>
-            <Input
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              required
-            />
-          </div>
-          <div>
-            <label className="text-sm text-gray-700">Descrição</label>
-            <Textarea
-              value={form.description}
-              onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
-              }
-              required
-            />
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="text-sm text-gray-700">Preço por hora (R$)</label>
-              <Input
-                type="number"
-                min="0"
-                step="1"
-                value={form.hourlyPrice}
-                onChange={(e) =>
-                  setForm({ ...form, hourlyPrice: e.target.value })
-                }
-                required
-              />
-            </div>
-            <div className="flex items-end gap-2">
-              <label className="inline-flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={form.remote}
-                  onChange={(e) =>
-                    setForm({ ...form, remote: e.target.checked })
-                  }
-                />
-                Atuação remota
-              </label>
-            </div>
-          </div>
-          {!form.remote && (
-            <div>
-              <label className="text-sm text-gray-700">Localização</label>
-              <Input
-                placeholder="Cidade - UF"
-                value={form.location}
-                onChange={(e) =>
-                  setForm({ ...form, location: e.target.value })
-                }
-              />
-            </div>
-          )}
-          <div>
-            <label className="text-sm text-gray-700">
-              Tags (separadas por vírgula)
-            </label>
-            <Input
-              placeholder="ex.: medicação, quedas, domiciliar"
-              value={form.tags}
-              onChange={(e) => setForm({ ...form, tags: e.target.value })}
-            />
-          </div>
-          <div>
-            <label className="text-sm text-gray-700">Imagem de capa (URL)</label>
-            <Input
-              placeholder="https://..."
-              value={form.cover}
-              onChange={(e) => setForm({ ...form, cover: e.target.value })}
-            />
-          </div>
-          <div className="flex justify-end">
-            <Button type="submit">
-              <Plus className="h-4 w-4" /> Publicar
-            </Button>
-          </div>
-        </form>
-      </Card>
+      <ServiceForm form={form} setForm={setForm} onSubmit={onSubmit} />
     </div>
+  );
+}
+
+// ---------- Editar serviço (NOVO) ----------
+function EditService({ session }) {
+  const navigate = useNavigate();
+  const { id } = useParams();
+
+  // Carrega serviço
+  const all = readLS(LS_KEYS.services, []);
+  const existing = all.find((s) => s.id === id);
+
+  // Validações: precisa existir e pertencer ao usuário
+  useEffect(() => {
+    if (!existing) {
+      alert("Serviço não encontrado.");
+      navigate("/services");
+      return;
+    }
+    if (!session || existing.ownerEmail !== session.email) {
+      alert("Você não tem permissão para editar este serviço.");
+      navigate("/services");
+    }
+  }, [existing, session, navigate]);
+
+  const [form, setForm] = useState(() => {
+    if (!existing) {
+      return {
+        title: "",
+        description: "",
+        hourlyPrice: "",
+        remote: false,
+        location: "",
+        tags: "",
+        cover: "",
+      };
+    }
+    return {
+      title: existing.title,
+      description: existing.description,
+      hourlyPrice: existing.hourlyPrice,
+      remote: existing.remote,
+      location: existing.remote ? "" : existing.location,
+      tags: (existing.tags || []).join(", "),
+      cover: existing.cover || "",
+    };
+  });
+
+  const onSubmit = (e) => {
+    e.preventDefault();
+    const list = readLS(LS_KEYS.services, []);
+    const idx = list.findIndex((s) => s.id === id);
+    if (idx === -1) {
+      alert("Serviço não encontrado.");
+      return navigate("/services");
+    }
+    if (!session || list[idx].ownerEmail !== session.email) {
+      alert("Você não tem permissão para editar este serviço.");
+      return navigate("/services");
+    }
+
+    const updated = {
+      ...list[idx],
+      title: form.title.trim(),
+      description: form.description.trim(),
+      hourlyPrice: Number(form.hourlyPrice || 0),
+      remote: !!form.remote,
+      location: form.remote ? "Remoto" : form.location.trim(),
+      tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
+      cover: form.cover.trim(),
+    };
+
+    list[idx] = updated;
+    writeLS(LS_KEYS.services, list);
+    alert("Serviço atualizado!");
+    navigate("/services");
+  };
+
+  return (
+    <div className="mx-auto max-w-2xl px-4 pb-24 pt-4 md:pb-8">
+      <h2 className="mb-2 text-2xl font-bold">Editar serviço</h2>
+      <ServiceForm form={form} setForm={setForm} onSubmit={onSubmit} />
+    </div>
+  );
+}
+
+// Formulário reutilizável (Adicionar/Editar)
+function ServiceForm({ form, setForm, onSubmit }) {
+  return (
+    <Card>
+      <form onSubmit={onSubmit} className="grid gap-4">
+        <div>
+          <label className="text-sm text-gray-700">Título</label>
+          <Input
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            required
+          />
+        </div>
+        <div>
+          <label className="text-sm text-gray-700">Descrição</label>
+          <Textarea
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            required
+          />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <label className="text-sm text-gray-700">Preço por hora (R$)</label>
+            <Input
+              type="number"
+              min="0"
+              step="1"
+              value={form.hourlyPrice}
+              onChange={(e) => setForm({ ...form, hourlyPrice: e.target.value })}
+              required
+            />
+          </div>
+          <div className="flex items-end gap-2">
+            <label className="inline-flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={form.remote}
+                onChange={(e) => setForm({ ...form, remote: e.target.checked })}
+              />
+              Atuação remota
+            </label>
+          </div>
+        </div>
+        {!form.remote && (
+          <div>
+            <label className="text-sm text-gray-700">Localização</label>
+            <Input
+              placeholder="Cidade - UF"
+              value={form.location}
+              onChange={(e) => setForm({ ...form, location: e.target.value })}
+            />
+          </div>
+        )}
+        <div>
+          <label className="text-sm text-gray-700">Tags (separadas por vírgula)</label>
+          <Input
+            placeholder="ex.: medicação, quedas, domiciliar"
+            value={form.tags}
+            onChange={(e) => setForm({ ...form, tags: e.target.value })}
+          />
+        </div>
+        <div>
+          <label className="text-sm text-gray-700">Imagem de capa (URL)</label>
+          <Input
+            placeholder="https://..."
+            value={form.cover}
+            onChange={(e) => setForm({ ...form, cover: e.target.value })}
+          />
+        </div>
+        <div className="flex justify-end">
+          <Button type="submit">
+            <Pencil className="h-4 w-4" /> Salvar
+          </Button>
+        </div>
+      </form>
+    </Card>
   );
 }
 
@@ -1243,7 +1311,6 @@ function ProfilePage({ session }) {
   const onSave = (e) => {
     e.preventDefault();
     upsertUser({ ...current, ...form });
-    // sincroniza sessão
     const s = readLS(LS_KEYS.session, null);
     if (s?.email === form.email) {
       writeLS(LS_KEYS.session, { ...s, name: form.name, role: form.role });
@@ -1492,7 +1559,7 @@ function PublicProfile() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {services.map((s) => (
-            <ServiceCard key={s.id} service={s} canDelete={false} />
+            <ServiceCard key={s.id} service={s} canDelete={false} allowManage={false} />
           ))}
         </div>
       )}
@@ -1527,10 +1594,7 @@ function PageLayout({ session, onLogout, children }) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 pb-16 md:pb-0">
       <AppBar session={session} />
-
-      {/* Botões flutuantes: Home + Voltar */}
       <FloatingNavButtons />
-
       <main>{children}</main>
       <BottomTabs session={session} />
       <footer className="hidden border-t border-gray-200 bg-white md:block">
@@ -1602,7 +1666,6 @@ function App() {
       ]);
     }
 
-    // listener para logout disparado pelo ProfileMenu
     const logoutHandler = () => logout();
     window.addEventListener("logout", logoutHandler);
     return () => window.removeEventListener("logout", logoutHandler);
@@ -1621,6 +1684,14 @@ function App() {
             element={
               <PrivateRoute role="provider" session={session}>
                 <AddService session={session} />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/edit-service/:id"
+            element={
+              <PrivateRoute role="provider" session={session}>
+                <EditService session={session} />
               </PrivateRoute>
             }
           />
