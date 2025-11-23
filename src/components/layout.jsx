@@ -1,0 +1,236 @@
+// src/components/layout.jsx
+import React, { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  Heart,
+  MapPin,
+  Home,
+  ArrowLeft,
+  User,
+  LogOut,
+  MessageCircle,
+} from "lucide-react";
+
+// =================== APP BAR (topo) ===================
+export function AppBar({ session, onLogout }) {
+  return (
+    <div className="sticky top-0 z-40 border-b border-gray-200 bg-white/80 backdrop-blur">
+      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+        {/* Lado esquerdo: localização */}
+        <div className="flex items-center gap-2">
+          <Heart className="h-6 w-6 text-amber-600" />
+          <div className="leading-tight">
+            <div className="text-xs text-gray-500">Localização</div>
+            <div className="flex items-center gap-1 text-sm font-semibold">
+              <MapPin className="h-4 w-4" />
+              Brasil
+            </div>
+          </div>
+        </div>
+
+        {/* Lado direito: menu do usuário / botão Entrar */}
+        <UserMenuButton session={session} onLogout={onLogout} />
+      </div>
+    </div>
+  );
+}
+
+// =================== MENU DO USUÁRIO (mini menu estilo Twitch) ===================
+function UserMenuButton({ session, onLogout }) {
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const toggle = () => setOpen((o) => !o);
+  const close = () => setOpen(false);
+
+  if (!session) {
+    return (
+      <Link
+        to="/login"
+        className="inline-flex items-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+      >
+        Entrar
+      </Link>
+    );
+  }
+
+  const initial =
+    session.name?.[0]?.toUpperCase() || session.email[0]?.toUpperCase() || "?";
+
+  const go = (path) => {
+    navigate(path);
+    close();
+  };
+
+  const handleLogout = () => {
+    close();
+    onLogout?.();
+    navigate("/login");
+  };
+
+  return (
+    <div className="relative">
+      <button
+        onClick={toggle}
+        className="flex items-center gap-2 rounded-full bg-gray-100 px-2 py-1 pl-1 pr-3 text-sm hover:bg-gray-200"
+      >
+        <div className="h-8 w-8 rounded-full bg-amber-500 text-white flex items-center justify-center text-sm">
+          {initial}
+        </div>
+        <span className="hidden sm:block max-w-[120px] truncate font-medium">
+          {session.name || session.email}
+        </span>
+      </button>
+
+      {open && (
+        <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-gray-200 bg-white py-2 text-sm shadow-xl">
+          <div className="px-3 pb-2 border-b border-gray-100">
+            <div className="text-xs text-gray-500">Logado como</div>
+            <div className="font-semibold truncate">
+              {session.name || session.email}
+            </div>
+          </div>
+
+          <button
+            onClick={() => go("/account")}
+            className="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50"
+          >
+            <User className="h-4 w-4" />
+            <span>Minha conta</span>
+          </button>
+
+          <button
+            onClick={() => go("/profile")}
+            className="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50"
+          >
+            <User className="h-4 w-4" />
+            <span>Editar perfil</span>
+          </button>
+
+          <button
+            onClick={() => go("/services")}
+            className="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50"
+          >
+            <Home className="h-4 w-4" />
+            <span>Serviços</span>
+          </button>
+
+          <button
+            onClick={() => go("/contacts")}
+            className="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50"
+          >
+            <MessageCircle className="h-4 w-4" />
+            <span>Contato</span>
+          </button>
+
+          <div className="mt-1 border-t border-gray-100 pt-1">
+            <button
+              onClick={handleLogout}
+              className="flex w-full items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Sair</span>
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// =================== BOTTOM TABS (mobile) ===================
+export function BottomTabs({ session }) {
+  const loc = useLocation();
+  const is = (p) => loc.pathname.startsWith(p);
+
+  return (
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur md:hidden">
+      <div className="mx-auto grid max-w-5xl grid-cols-3 px-2 py-2 text-xs">
+        <TabLink
+          to="/services"
+          label="Início"
+          icon={Home}
+          active={is("/services") || loc.pathname === "/"}
+        />
+        <TabLink
+          to="/contacts"
+          label="Contatos"
+          icon={MessageCircle}
+          active={is("/contacts")}
+        />
+        <TabLink
+          to={session ? "/account" : "/login"}
+          label={session ? "Conta" : "Entrar"}
+          icon={User}
+          active={is("/account") || is("/login")}
+        />
+      </div>
+    </nav>
+  );
+}
+
+function TabLink({ to, label, icon: Icon, active }) {
+  return (
+    <Link
+      to={to}
+      className={`flex flex-col items-center rounded-xl px-3 py-1 ${
+        active ? "text-amber-600" : "text-gray-600"
+      }`}
+    >
+      <Icon className="h-6 w-6" />
+      <span className="mt-1">{label}</span>
+    </Link>
+  );
+}
+
+// =================== BOTÕES FLOTANTES (HOME + VOLTAR) ===================
+export function FloatingNavButtons() {
+  const navigate = useNavigate();
+
+  const goHome = () => navigate("/");
+  const goBack = () => navigate(-1);
+
+  return (
+    <div className="fixed left-3 top-3 z-50 flex gap-2">
+      <button
+        onClick={goHome}
+        className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 hover:bg-gray-50"
+        title="Ir para a página inicial"
+      >
+        <Home className="h-5 w-5 text-amber-600" />
+      </button>
+      <button
+        onClick={goBack}
+        className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 hover:bg-gray-50"
+        title="Voltar página"
+      >
+        <ArrowLeft className="h-5 w-5 text-gray-700" />
+      </button>
+    </div>
+  );
+}
+
+// =================== LAYOUT PRINCIPAL ===================
+export function PageLayout({ session, onLogout, children }) {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 pb-16 md:pb-0">
+      <AppBar session={session} onLogout={onLogout} />
+      <FloatingNavButtons />
+      <main>{children}</main>
+      <BottomTabs session={session} />
+
+      {/* Footer só no desktop */}
+      <footer className="hidden border-t border-gray-200 bg-white md:block">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-6 text-sm text-gray-600">
+          <div className="flex items-center gap-2">
+            <Heart className="h-4 w-4 text-amber-600" />
+            Vinculum © {new Date().getFullYear()}
+          </div>
+          <div>
+            Este é um MVP de demonstração. Não substitui orientação médica.
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}

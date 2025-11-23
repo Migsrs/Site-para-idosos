@@ -1,149 +1,144 @@
-# Vinculum 👵🧓
+# Vinculum - Marketplace de Assistentes Geriátricos (MVP)
 
-Marketplace de assistentes geriátricos, inspirado na experiência mobile do iFood.  
-O objetivo é conectar famílias e cuidadores de confiança para idosos, em um formato simples de **MVP**.
+Plataforma estilo iFood para conectar famílias a assistentes/cuidadores geriátricos.
+Foco em simplicidade, mobile-first e validação rápida de hipótese.
 
-> ⚠️ **Aviso importante:** Este projeto é um protótipo educacional/MVP e **não substitui orientação médica ou profissional real**.
+> ⚠️ MVP educativo/demonstrativo — sem backend. Persistência via localStorage. Não usar em produção sem camadas de segurança/privacidade.
 
----
+## ✨ Funcionalidades
 
-## 🧩 Visão geral
+Catálogo de serviços (listar/filtrar)
 
-O **Vinculum** é uma aplicação web construída com **React + Vite + Tailwind CSS**, usando **Firebase Authentication** para login com Google e **localStorage** como “banco de dados” local.
+Cadastro / Login (MVP via localStorage)
 
-Ele permite:
+Perfis:
 
-- cadastro de **clientes** e **prestadores** (cuidadores);
-- publicação de serviços por cuidadores;
-- visualização de serviços por clientes;
-- avaliações com estrelas e comentários para prestadores;
-- perfis públicos e privados.
+Prestador: perfil público com slug (/p/:slug)
 
-Todo o fluxo foi pensado como um MVP funcional para um sistema de contratação de assistentes geriátricos.
+Cliente: perfil privado
 
----
+CRUD de serviços (Prestador)
 
-## ✨ Funcionalidades principais
+Adicionar, Editar, Excluir (somente o dono)
 
-### Autenticação
+Contato: só permite acessar se estiver logado
 
-- Login com **email e senha**.
-- Login com **Google (Firebase)**.
-- Ao entrar com Google pela primeira vez:
-  - o email é obtido do Google;
-  - o usuário é redirecionado para uma tela de **“Completar cadastro”**;
-  - só depois de preencher nome, perfil, dados básicos e bio ele pode acessar o sistema.
+Edição de perfil com: nome, email, data de nascimento (idade), cidade, bio, avatar e campos específicos por papel
 
-### Perfis & usuários
+Home com destaque (banner), cards rápidos e design mobile-first
 
-- Dois tipos de usuário:
-  - **Cliente**  
-  - **Prestador de serviços (cuidador)**  
-- Campos de perfil:
-  - nome completo  
-  - email  
-  - data de nascimento (cálculo automático de idade)  
-  - cidade  
-  - biografia  
-  - avatar/foto (upload simples via `FileReader`)  
-  - para prestadores: especialidades, anos de experiência, certificações  
-  - para clientes: necessidades de cuidado, contato do cuidador principal  
+Navegação:
 
-- Páginas de perfil:
-  - **Minha conta** (resumo dos dados + botão de logout)
-  - **Editar perfil**
-  - **Perfil público do prestador** (link compartilhável, com slug amigável)
+Topo com localização, menu de perfil e botões flutuantes Home + Voltar
 
-### Serviços
+Bottom Tabs (mobile): Início, Contatos, Conta
 
-- Listagem de serviços em um layout inspirado no iFood:
-  - cards com título, descrição, preço por hora, tags e rating
-  - destaque se o serviço é remoto ou presencial
-- **Prestadores podem:**
-  - adicionar novos serviços
-  - editar serviços que eles mesmos criaram
-  - excluir serviços próprios
-- **Clientes:**
-  - podem ver todos os serviços
-  - só conseguem entrar em contato se estiverem logados  
-    (senão são redirecionados para o login)
+## 🧱 Stack
 
-### Avaliações (ratings)
+React + React Router
+Tailwind CSS
+Framer Motion (animações sutis)
+lucide-react (ícones)
+localStorage (persistência do MVP)
 
-- Clientes logados podem **avaliar prestadores** (estrelas + comentário).
-- Cada cliente pode ter **1 avaliação por prestador** (ao enviar de novo, ele atualiza).
-- Os dados de avaliação são salvos em `localStorage`:
-  - `vinculum_ratings`
-- Funções utilitárias calculam:
-  - lista de avaliações por prestador
-  - **média de estrelas** (`calcAverageRating`)
-- A média é exibida:
-  - na página de perfil público do prestador
-  - nos cards de serviço
+## 🚀 Como rodar
 
-### UI / UX
+1. Clonar
 
-- Layout **mobile-first** com:
-  - **AppBar** fixa no topo (localização + menu do usuário)
-  - **Bottom Tab Bar** no mobile (Início, Contatos, Conta)
-  - **Mini menu do usuário** no canto superior direito (estilo menu do Twitch) com:
-    - Minha conta
-    - Editar perfil
-    - Serviços
-    - Contato
-    - Sair
-- **Botões flutuantes** no canto superior esquerdo:
-  - ícone de **Home** → volta para a página inicial
-  - **seta de voltar** → volta para a página anterior
-- Hero section com banner e call-to-action:
-  - “Bem-vindo ao Vinculum”
-  - “Conheça nossos serviços”
-- Paleta **laranja/dourado** focada em acolhimento e confiança.
+git clone https://github.com/seu-usuario/vinculum.git
+cd vinculum
+
+2. Instalar dependências
+
+npm install ou yarn
+
+3. Rodar em dev
+
+npm run dev -> abra o endereço mostrado no terminal (ex.: http://localhost:5173)
+
+> Se estiver iniciando do zero com Vite: npm create vite@latest, escolha React, depois instale Tailwind e as libs citadas.
 
 ---
 
-## 🛠️ Tecnologias utilizadas
+## 👤 Usuários de teste (Seeds)
 
-- **Frontend**
-  - [React](https://react.dev/)
-  - [Vite](https://vite.dev/)
-  - [React Router DOM](https://reactrouter.com/)
-  - [Tailwind CSS](https://tailwindcss.com/)
-  - [Lucide React](https://lucide.dev/) (ícones)
+Ao iniciar, o app cria usuários e serviços exemplo:
 
-- **Autenticação**
-  - [Firebase Authentication](https://firebase.google.com/docs/auth) (login com Google)
+Prestadores
 
-- **Persistência (MVP)**
-  - `localStorage` do navegador:
-    - `vinculum_users`
-    - `vinculum_session`
-    - `vinculum_services`
-    - `vinculum_contacts`
-    - `vinculum_ratings`
-    - `vinculum_google_pending`
+Ana Souza — ana@nurse.com / 123
 
----
+Carlos Ferreira — carlos@onco.com / 123
 
-## 🗂️ Estrutura básica de pastas
 
-```bash
-src/
-  main.jsx          # ponto de entrada React + Vite
-  App.jsx           # definição das rotas e seeds iniciais
+Cliente
 
-  components/
-    layout.jsx      # PageLayout, AppBar, BottomTabs, mini menu, botões flutuantes
-    ui.jsx          # Button, GhostButton, Input, Textarea, Card, SearchBar etc.
+Paciente Demo — paciente@demo.com / 123
 
-  pages/
-    HomePage.jsx        # Hero, banner, tiles de destaque
-    AuthPages.jsx       # Login, Register, CompleteGoogleProfile
-    ServicesPages.jsx   # listagem de serviços, AddService, EditService, ServiceCard
-    ContactsPage.jsx    # página “Fale conosco”
-    ProfilePages.jsx    # Account, ProfilePage (editar), PublicProfile
-  utils/
-    storage.js      # helpers de localStorage, usuários, ratings, slug, idade
-    seeds.js        # serviços e usuários de exemplo
-  firebase.js       # configuração do Firebase Authentication
-  index.css         # Tailwind e estilos globais
+> Após login como prestador, você verá Editar e Excluir nos seus serviços.
+
+## 🗂️ Estrutura (simplificada)
+
+src/main.jsx — App completo (rotas, páginas, componentes e lógica do MVP)
+
+src/index.css — Tailwind (geral)
+
+> Por ser MVP, centralizamos tudo no main.jsx para velocidade. Em produção, recomendável separar em módulos/páginas/hooks.
+
+
+## 🔒 Regras de Acesso
+
+Adicionar/Editar/Excluir serviço: apenas Prestador logado dono do serviço.
+
+Contato: somente para usuário logado (cliente ou prestador).
+
+## 🧪 Fluxos principais
+
+Prestador:
+
+1. Cadastra-se como Prestador
+
+2. Preenche seu perfil (especialidades, certificações, etc.)
+
+3. Adiciona serviços
+
+4. Edita/Exclui quando necessário
+5. 
+6. Divulga link público: /p/:slug
+
+Cliente:
+
+1. Busca serviços
+
+2. Visualiza perfis públicos
+
+3. Faz login para entrar em contato
+## 🧭 Decisões de MVP
+
+Persistência em localStorage (sem backend)
+
+Autenticação simplificada (somente e-mail/senha “em claro”)
+
+Slugs para perfis públicos (URLs legíveis)
+
+Design mobile-first com navegação simples (home, tabs, botões flutuantes)
+
+## 🗺️ Roadmap (próximos passos)
+
+API real (login seguro, perfis, serviços, contatos)
+
+Upload de mídia em servidores/objet storage
+
+Mensageria entre cliente ↔ prestador
+
+Pagamentos/agenda (marcação de sessões)
+
+Moderação/validação de perfis
+
+Acessibilidade (WAI-ARIA) e i18n
+
+SEO (metatags dinâmicas) e sitemap
+
+## ⚠️ Aviso Legal
+
+Este projeto é um protótipo educacional. Não substitui orientação médica, nem lida com dados sensíveis de forma adequada para produção.
