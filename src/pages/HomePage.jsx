@@ -55,40 +55,42 @@ function HeroSection() {
 
 // =================== CARROSSEL DE PROMOÇÕES ===================
 export function PromoCarousel() {
-  const promos = [
+  const promotions = [
     {
+      id: 1,
       label: "Promoção de lançamento",
       title: "Primeira diária com 20% OFF",
-      subtitle: "Para novos clientes cadastrados neste mês.",
+      description: "Para novos clientes cadastrados neste mês.",
     },
     {
-      label: "Cuidado contínuo",
-      title: "Pacote semanal com desconto",
-      subtitle: "Contrate 5 dias de acompanhamento e ganhe o 6º com 50% OFF.",
+      id: 2,
+      label: "Pacote semanal",
+      title: "7 dias com 1 dia grátis",
+      description: "Ideal para famílias que precisam de apoio contínuo.",
     },
     {
-      label: "Atendimento remoto",
-      title: "Teleacompanhamento especial",
-      subtitle:
-        "Monitoramento remoto para idosos independentes com preço reduzido.",
+      id: 3,
+      label: "Teleatendimento",
+      title: "Avaliação remota com 30% OFF",
+      description: "Primeira consulta on-line com desconto especial.",
     },
     {
-      label: "Famílias recorrentes",
-      title: "Programa de fidelidade Vinculum",
-      subtitle:
-        "Famílias que utilizam o serviço todo mês ganham descontos progressivos.",
+      id: 4,
+      label: "Programa cuidador família",
+      title: "Treinamento para familiares",
+      description: "Aprenda boas práticas para cuidar de idosos em casa.",
     },
   ];
 
-  const [index, setIndex] = useState(0);
+  const [active, setActive] = useState(0);
 
-  // Troca automática de promoção a cada 6 segundos
+  // ---- auto avanço a cada 6s ----
   useEffect(() => {
-    const id = setInterval(() => {
-      setIndex((prev) => (prev + 1) % promos.length);
+    const timer = setInterval(() => {
+      setActive((prev) => (prev + 1) % promotions.length);
     }, 6000);
-    return () => clearInterval(id);
-  }, [promos.length]);
+    return () => clearInterval(timer);
+  }, [promotions.length]);
 
   // ---- suporte a swipe no mobile ----
   const touchStartX = useRef(null);
@@ -116,28 +118,35 @@ export function PromoCarousel() {
 
     touchStartX.current = null;
   };
-  const current = promos[index];
+
+  const current = promotions[active];
 
   return (
-    <div className="mb-4">
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-amber-500 to-yellow-500 p-5 text-white shadow">
+    <div className="mb-4 sm:mb-6">
+      <div
+        className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-amber-500 to-yellow-500 p-5 text-white shadow"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <div className="text-sm opacity-90">{current.label}</div>
         <div className="mt-1 text-2xl font-bold leading-tight">
           {current.title}
         </div>
-        <div className="mt-2 text-sm opacity-90">{current.subtitle}</div>
+        <div className="mt-2 text-sm opacity-90">{current.description}</div>
 
-        {/* bolinhas de indicação / controle */}
-        <div className="mt-4 flex items-center justify-end gap-1">
-          {promos.map((_, i) => (
+        {/* bolinhas de navegação */}
+        <div className="pointer-events-auto absolute bottom-3 right-4 flex gap-1.5">
+          {promotions.map((promo, index) => (
             <button
-              key={i}
+              key={promo.id}
               type="button"
-              onClick={() => setIndex(i)}
+              onClick={() => setActive(index)}
               className={`h-2.5 w-2.5 rounded-full transition ${
-                i === index ? "bg-white" : "bg-white/40"
+                index === active
+                  ? "bg-white"
+                  : "bg-white/50 hover:bg-white/80"
               }`}
-              aria-label={`Ir para promoção ${i + 1}`}
+              aria-label={`Ir para promoção ${index + 1}`}
             />
           ))}
         </div>
@@ -145,6 +154,7 @@ export function PromoCarousel() {
     </div>
   );
 }
+
 
 // =================== QUADRADINHOS RÁPIDOS ===================
 function QuickTiles() {
