@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Shield, BadgeCheck, MapPin, Phone } from "lucide-react";
 
@@ -90,6 +90,32 @@ export function PromoCarousel() {
     return () => clearInterval(id);
   }, [promos.length]);
 
+  // ---- suporte a swipe no mobile ----
+  const touchStartX = useRef(null);
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartX.current == null) return;
+    const diffX = e.changedTouches[0].clientX - touchStartX.current;
+
+    // se arrastar mais de 40px pra um lado, troca o slide
+    if (Math.abs(diffX) > 40) {
+      if (diffX < 0) {
+        // arrastou para a esquerda -> próxima promoção
+        setActive((prev) => (prev + 1) % promotions.length);
+      } else {
+        // arrastou para a direita -> promoção anterior
+        setActive((prev) =>
+          prev === 0 ? promotions.length - 1 : prev - 1
+        );
+      }
+    }
+
+    touchStartX.current = null;
+  };
   const current = promos[index];
 
   return (

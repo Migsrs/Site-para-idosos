@@ -191,7 +191,7 @@ function FloatingDesktopNav() {
 
   return (
     // hidden em mobile; aparece só em md+
-    <div className="pointer-events-none fixed left-4 top-4 z-40 hidden gap-3 md:flex md:left-6 md:top-6">
+    <div className="pointer-events-none fixed left-4 top-1 z-50 hidden gap-3 md:flex md:left-6 md:top-2">
       {/* Home */}
       <button
         type="button"
@@ -217,14 +217,16 @@ function FloatingDesktopNav() {
   );
 }
 
+
 // =================== LAYOUT PRINCIPAL ===================
 export function PageLayout({ session, onLogout, children }) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 pb-16 md:pb-0">
-      {/* Botões flutuantes só em desktop/tablet */}
+      <AppBar session={session} onLogout={onLogout} />
+
+      {/* Botões flutuantes só em desktop/tablet, por cima do AppBar */}
       <FloatingDesktopNav />
 
-      <AppBar session={session} onLogout={onLogout} />
       <main>{children}</main>
       <BottomTabs session={session} />
 
