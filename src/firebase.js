@@ -14,7 +14,7 @@ const firebaseConfig = {
   storageBucket: "vinculum-91685.firebasestorage.app",
   messagingSenderId: "738135002732",
   appId: "1:738135002732:web:17bd5a99fd8c28a4061249",
-  measurementId: "G-J3G20SXQJ9",
+  measurementId: "G-J3G20SXQJ9"
 };
 
 // ---- Inicializa Firebase (app raiz) ----
