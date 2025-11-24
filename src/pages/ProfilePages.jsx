@@ -518,7 +518,7 @@ export function PublicProfile({ session }) {
               service={s}
               canDelete={false}
               allowManage={false}
-              session={null}
+              session={session}
             />
           ))}
         </div>
