@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Shield, BadgeCheck, MapPin, Phone } from "lucide-react";
+import { db, auth, signInWithGoogle } from "./firebaseConfig";
 
 // =================== PÁGINA PRINCIPAL ===================
 export default function HomePage() {

@@ -1,4 +1,5 @@
 // src/pages/ServicesPages.jsx
+import { db, auth, signInWithGoogle } from "./firebaseConfig";
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { MapPin, Star, Plus, Pencil, Trash2 } from "lucide-react";

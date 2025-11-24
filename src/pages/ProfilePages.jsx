@@ -1,4 +1,5 @@
 // src/pages/ProfilePages.jsx
+import { db, auth, signInWithGoogle } from "./firebaseConfig";
 import React, { useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import {

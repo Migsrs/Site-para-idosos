@@ -1,8 +1,11 @@
-// src/firebase.js
-// Lembre de instalar antes: npm install firebase
-
+// src/firebaseConfig.js (por exemplo)
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD8nF-q4cESYCMAPBoSkY5wH5sakVedudw",
@@ -11,16 +14,21 @@ const firebaseConfig = {
   storageBucket: "vinculum-91685.firebasestorage.app",
   messagingSenderId: "738135002732",
   appId: "1:738135002732:web:17bd5a99fd8c28a4061249",
-  measurementId:"G-J3G20SXQJ9"
+  measurementId: "G-J3G20SXQJ9",
 };
 
-// Inicializa Firebase
+// ---- Inicializa Firebase (app raiz) ----
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
 
-// Função helper para login com Google
+// ---- Auth (login / logout) ----
+export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
+
+// ---- Firestore (banco de dados) ----
+export const db = getFirestore(app);
+
+// ---- Helper para login com Google ----
 export async function signInWithGoogle() {
-  const result = await signInWithPopup(auth, provider);
-  return result.user; // retorna só o user (email, displayName, photoURL, etc.)
+  const result = await signInWithPopup(auth, googleProvider);
+  return result.user; // email, displayName, photoURL, uid, etc.
 }
