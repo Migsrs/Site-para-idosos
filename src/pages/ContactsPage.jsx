@@ -1,5 +1,4 @@
 // src/pages/ContactsPage.jsx
-import { db, auth, signInWithGoogle } from "./firebaseConfig";
 import React, { useState } from "react";
 import { LS_KEYS, readLS, writeLS } from "../utils/storage";
 import { Button, Card, Input, Textarea } from "../components/ui";

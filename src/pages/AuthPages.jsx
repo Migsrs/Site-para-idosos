@@ -1,5 +1,4 @@
 // src/pages/AuthPages.jsx
-import { db, auth, signInWithGoogle } from "./firebaseConfig";
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { LS_KEYS, readLS, writeLS } from "../utils/storage";
