@@ -7,7 +7,7 @@ export default function HomePage() {
   return (
     <div className="mx-auto max-w-5xl px-4 pb-24 pt-0 md:pb-8">
       <HeroSection />
-      <div className="mt-6">
+      <div className="mt-4 sm:mt-6">
         <PromoCarousel />
         <QuickTiles />
       </div>
@@ -15,26 +15,33 @@ export default function HomePage() {
   );
 }
 
+
 // =================== HERO (TOPO) ===================
 function HeroSection() {
   return (
-    <div className="relative mb-6 overflow-hidden rounded-3xl">
+    <div className="relative mb-4 overflow-hidden rounded-3xl sm:mb-6">
       <img
         src="/img/Cuidados.jpg"
         alt="Cuidados com idosos"
-        className="h-60 w-full object-cover md:h-72"
+        className="h-56 w-full object-cover sm:h-60 md:h-72"
       />
+
       <div className="absolute inset-0 bg-black/40" />
-      <div className="absolute inset-0 flex items-center justify-center p-4">
-        <div className="max-w-xl rounded-2xl bg-black/40 p-5 text-center text-white shadow-lg backdrop-blur">
-          <div className="text-2xl font-bold">Bem-vindo ao Vinculum</div>
-          <p className="mt-2 text-sm opacity-90">
+
+      <div className="absolute inset-0 flex items-center justify-center p-3 sm:p-4">
+        <div className="max-w-md rounded-2xl bg-black/45 p-4 text-center text-white shadow-lg backdrop-blur-sm sm:max-w-xl sm:p-5">
+          <div className="text-xl font-bold sm:text-2xl">
+            Bem-vindo ao Vinculum
+          </div>
+
+          <p className="mt-2 text-xs leading-relaxed opacity-90 sm:text-sm">
             Conectamos famílias a cuidadores geriátricos de confiança — no
             domicílio ou por acompanhamento remoto.
           </p>
+
           <Link
             to="/services"
-            className="mt-4 inline-flex rounded-full bg-amber-500 px-5 py-2 text-sm font-semibold text-white shadow hover:bg-amber-600"
+            className="mt-4 inline-flex rounded-full bg-amber-500 px-4 py-2 text-xs font-semibold text-white shadow hover:bg-amber-600 sm:px-5 sm:text-sm"
           >
             Conheça nossos serviços
           </Link>
@@ -43,6 +50,8 @@ function HeroSection() {
     </div>
   );
 }
+
+
 
 // =================== CARROSSEL DE PROMOÇÕES ===================
 export function PromoCarousel() {
