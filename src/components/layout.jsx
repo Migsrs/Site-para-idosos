@@ -74,19 +74,19 @@ function UserMenuButton({ session, onLogout }) {
         onClick={toggle}
         className="flex items-center gap-2 rounded-full bg-gray-100 px-2 py-1 pl-1 pr-3 text-sm hover:bg-gray-200"
       >
-        <div className="h-8 w-8 rounded-full bg-amber-500 text-white flex items-center justify-center text-sm">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500 text-sm text-white">
           {initial}
         </div>
-        <span className="hidden sm:block max-w-[120px] truncate font-medium">
+        <span className="hidden max-w-[120px] truncate font-medium sm:block">
           {session.name || session.email}
         </span>
       </button>
 
       {open && (
         <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-gray-200 bg-white py-2 text-sm shadow-xl">
-          <div className="px-3 pb-2 border-b border-gray-100">
+          <div className="border-b border-gray-100 px-3 pb-2">
             <div className="text-xs text-gray-500">Logado como</div>
-            <div className="font-semibold truncate">
+            <div className="truncate font-semibold">
               {session.name || session.email}
             </div>
           </div>
@@ -150,7 +150,7 @@ export function BottomTabs({ session }) {
           to="/"
           label="Início"
           icon={Home}
-          active={is("/services") || loc.pathname === "/"}
+          active={loc.pathname === "/"}
         />
         <TabLink
           to="/contacts"
@@ -183,29 +183,36 @@ function TabLink({ to, label, icon: Icon, active }) {
   );
 }
 
-// =================== BOTÕES FLOTANTES (HOME + VOLTAR) ===================
-export function FloatingNavButtons() {
+// =================== BOTÕES FLUTUANTES (HOME + VOLTAR) – DESKTOP ===================
+function FloatingDesktopNav() {
   const navigate = useNavigate();
-
-  const goHome = () => navigate("/");
-  const goBack = () => navigate(-1);
+  const location = useLocation();
+  const isHome = location.pathname === "/";
 
   return (
-    <div className="fixed left-3 top-3 z-50 flex gap-2">
+    // hidden em mobile; aparece só em md+
+    <div className="pointer-events-none fixed left-4 top-4 z-40 hidden gap-3 md:flex md:left-6 md:top-6">
+      {/* Home */}
       <button
-        onClick={goHome}
-        className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 hover:bg-gray-50"
-        title="Ir para a página inicial"
+        type="button"
+        onClick={() => navigate("/")}
+        className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-md shadow-black/5 ring-1 ring-black/5 transition hover:scale-[1.03]"
+        aria-label="Ir para a página inicial"
       >
         <Home className="h-5 w-5 text-amber-600" />
       </button>
-      <button
-        onClick={goBack}
-        className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 hover:bg-gray-50"
-        title="Voltar página"
-      >
-        <ArrowLeft className="h-5 w-5 text-gray-700" />
-      </button>
+
+      {/* Voltar – só aparece se não estiver na home */}
+      {!isHome && (
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-md shadow-black/5 ring-1 ring-black/5 transition hover:scale-[1.03]"
+          aria-label="Voltar para a página anterior"
+        >
+          <ArrowLeft className="h-5 w-5 text-amber-600" />
+        </button>
+      )}
     </div>
   );
 }
@@ -214,8 +221,10 @@ export function FloatingNavButtons() {
 export function PageLayout({ session, onLogout, children }) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 pb-16 md:pb-0">
+      {/* Botões flutuantes só em desktop/tablet */}
+      <FloatingDesktopNav />
+
       <AppBar session={session} onLogout={onLogout} />
-      <FloatingNavButtons />
       <main>{children}</main>
       <BottomTabs session={session} />
 
