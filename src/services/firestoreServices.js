@@ -11,7 +11,7 @@ import {
   doc,
   serverTimestamp,
 } from "firebase/firestore";
-import { db } from "../firebaseConfig";
+import { db } from "../firebase";
 
 /**
  * Cria um serviço no Firestore.

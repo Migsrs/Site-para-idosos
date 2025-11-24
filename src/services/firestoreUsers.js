@@ -6,7 +6,7 @@ import {
   getDocs,
   serverTimestamp,
 } from "firebase/firestore";
-import { db } from "../firebaseConfig";
+import { db } from "../firebase";
 
 /**
  * Salva/atualiza o perfil do usuário na coleção "users".
