@@ -4,7 +4,6 @@ Plataforma estilo iFood para conectar famílias a assistentes/cuidadores geriát
 Foco em simplicidade, mobile-first e validação rápida de hipótese.
 
 > ⚠️ MVP educativo/demonstrativo — sem backend. Persistência via localStorage. Não usar em produção sem camadas de segurança/privacidade.
-> Para instalar o node_modules.rar acesse o link https://drive.google.com/drive/folders/19dlxxYhyyeYtt1YkL_fIZh72-zTPqHUS?usp=sharing, pois o github não está aceitando arquivos maiores que 25MB
 
 ## ✨ Funcionalidades
 
