@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { LS_KEYS, readLS, writeLS } from "../utils/storage";
 import { Button, Card, Input, Textarea } from "../components/ui";
 import { signInWithGoogle } from "../firebase";
+import { saveUserProfile } from "../services/firestoreUsers";
 
 // ---------- LOGIN ----------
 export function Login({ onLogin }) {
@@ -12,12 +13,39 @@ export function Login({ onLogin }) {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     const users = readLS(LS_KEYS.users, []);
-    const user = users.find((u) => u.email === email && u.password === password);
+    const user = users.find(
+      (u) => u.email === email && u.password === password
+    );
     if (!user) return setError("Credenciais inválidas.");
+
+    // Atualiza sessão local (mesmo comportamento de antes)
     onLogin({ email: user.email, name: user.name, role: user.role });
+
+    // Tenta sincronizar perfil no Firestore (coleção Contas)
+    try {
+      await saveUserProfile(
+        { email: user.email, displayName: user.name },
+        {
+          uid: user.uid || user.email, // fallback para usuários antigos sem uid
+          name: user.name,
+          role: user.role,
+          city: user.city,
+          birthDate: user.dob,
+          needs: user.careNeeds,
+          mainCaregiver: user.caregiverContact,
+          bio: user.bio,
+          specialties: user.specialties,
+          yearsExp: user.yearsExp,
+          certifications: user.certifications,
+        }
+      );
+    } catch (err) {
+      console.error("Erro ao sincronizar perfil no Firestore:", err);
+    }
+
     navigate("/services");
   };
 
@@ -33,18 +61,39 @@ export function Login({ onLogin }) {
       const existing = users.find((u) => u.email === fbUser.email);
 
       if (existing) {
-        // Já tem cadastro -> entra direto
+        // Já tem cadastro local -> entra direto
         onLogin({
           email: existing.email,
           name: existing.name || fbUser.displayName || existing.email,
           role: existing.role,
         });
+
+        // Sincroniza/atualiza perfil deste usuário no Firestore
+        try {
+          await saveUserProfile(fbUser, {
+            uid: fbUser.uid,
+            name: existing.name || fbUser.displayName || existing.email,
+            role: existing.role,
+            city: existing.city,
+            birthDate: existing.dob,
+            needs: existing.careNeeds,
+            mainCaregiver: existing.caregiverContact,
+            bio: existing.bio,
+            specialties: existing.specialties,
+            yearsExp: existing.yearsExp,
+            certifications: existing.certifications,
+          });
+        } catch (err) {
+          console.error("Erro ao sincronizar perfil Google no Firestore:", err);
+        }
+
         navigate("/services");
         return;
       }
 
-      // Novo usuário Google -> salva dados pendentes e manda completar cadastro
+      // Novo usuário Google -> salva dados pendentes (AGORA COM UID) e manda completar cadastro
       writeLS(LS_KEYS.googlePending, {
+        uid: fbUser.uid,
         email: fbUser.email,
         name: fbUser.displayName || "",
         avatar: fbUser.photoURL || "",
@@ -138,13 +187,43 @@ export function Register() {
   });
   const [error, setError] = useState("");
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
     const users = readLS(LS_KEYS.users, []);
     if (users.some((u) => u.email === form.email))
       return setError("Email já cadastrado.");
-    const newUsers = [...users, form];
-    writeLS(LS_KEYS.users, newUsers);
+
+    // Gera um uid para este usuário (para usar como id no Firestore)
+    const uid =
+      typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random()}`;
+
+    const newUser = { ...form, uid };
+
+    // Salva no localStorage (comportamento antigo)
+    writeLS(LS_KEYS.users, [...users, newUser]);
+
+    // Tenta salvar o perfil no Firestore (coleção Contas)
+    try {
+      await saveUserProfile({ email: newUser.email }, {
+        uid,
+        name: newUser.name,
+        role: newUser.role,
+        city: newUser.city,
+        birthDate: newUser.dob,
+        needs: newUser.careNeeds,
+        mainCaregiver: newUser.caregiverContact,
+        bio: newUser.bio,
+        specialties: newUser.specialties,
+        yearsExp: newUser.yearsExp,
+        certifications: newUser.certifications,
+      });
+    } catch (err) {
+      console.error("Erro ao salvar perfil no Firestore:", err);
+      // não bloqueia o cadastro local
+    }
+
     alert("Cadastro realizado! Faça login.");
     navigate("/login");
   };
@@ -215,7 +294,9 @@ export function Register() {
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="text-sm text-gray-700">Data de nascimento</label>
+              <label className="text-sm text-gray-700">
+                Data de nascimento
+              </label>
               <Input
                 type="date"
                 value={form.dob}
@@ -343,7 +424,7 @@ export function CompleteGoogleProfile({ onProfileSaved }) {
     }
   }, [pending, navigate]);
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
     if (!pending?.email) {
       setError("Sessão com Google expirada. Entre novamente.");
@@ -356,8 +437,11 @@ export function CompleteGoogleProfile({ onProfileSaved }) {
       return;
     }
 
+    const uid = pending.uid || pending.email;
+
     const newUser = {
       ...form,
+      uid,
       email: pending.email,
       name: form.name || pending.name || pending.email,
       avatar: pending.avatar,
@@ -366,6 +450,32 @@ export function CompleteGoogleProfile({ onProfileSaved }) {
 
     writeLS(LS_KEYS.users, [...users, newUser]);
     localStorage.removeItem(LS_KEYS.googlePending);
+
+    // Salva perfil deste usuário Google no Firestore
+    try {
+      await saveUserProfile(
+        {
+          uid,
+          email: pending.email,
+          displayName: newUser.name,
+        },
+        {
+          uid,
+          name: newUser.name,
+          role: newUser.role,
+          city: newUser.city,
+          birthDate: newUser.dob,
+          needs: newUser.careNeeds,
+          mainCaregiver: newUser.caregiverContact,
+          bio: newUser.bio,
+          specialties: newUser.specialties,
+          yearsExp: newUser.yearsExp,
+          certifications: newUser.certifications,
+        }
+      );
+    } catch (err) {
+      console.error("Erro ao salvar perfil Google no Firestore:", err);
+    }
 
     onProfileSaved?.({
       email: newUser.email,
@@ -434,7 +544,9 @@ export function CompleteGoogleProfile({ onProfileSaved }) {
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="text-sm text-gray-700">Data de nascimento</label>
+              <label className="text-sm text-gray-700">
+                Data de nascimento
+              </label>
               <Input
                 type="date"
                 value={form.dob}
