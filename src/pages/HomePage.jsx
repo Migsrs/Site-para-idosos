@@ -10,6 +10,7 @@ export default function HomePage() {
       <div className="mt-4 sm:mt-6">
         <PromoCarousel />
         <QuickTiles />
+        <AboutSection/>
       </div>
     </div>
   );
@@ -187,3 +188,37 @@ function Tile({ icon: Icon, title, subtitle }) {
   );
 }
 
+// =================== SOBRE NÓS ===================
+function AboutSection() {
+  return (
+    <section className="mt-6 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-gray-200 sm:p-6">
+      <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
+        Sobre o Vinculum
+      </h2>
+
+      <p className="mt-2 text-sm leading-relaxed text-gray-700">
+        O Vinculum nasceu da vivência pessoal dos integrantes do projeto com
+        familiares idosos que precisavam de apoio no dia a dia. Em diferentes
+        momentos, percebemos a dificuldade das famílias em encontrar
+        cuidadores de confiança, com informações claras sobre experiência,
+        disponibilidade e avaliações de outros familiares.
+      </p>
+
+      <p className="mt-2 text-sm leading-relaxed text-gray-700">
+        A nossa motivação é usar tecnologia para aproximar pessoas: de um lado,
+        famílias que precisam de cuidado gerontológico seguro e acolhedor; do
+        outro, profissionais qualificados que muitas vezes não têm visibilidade
+        ou uma forma simples de apresentar seus serviços.
+      </p>
+
+      <p className="mt-2 text-sm leading-relaxed text-gray-700">
+        O projeto começou como um MVP acadêmico, inspirado em plataformas como
+        o iFood, mas adaptado ao contexto da saúde. A ideia é oferecer uma
+        interface simples, avaliações transparentes e um fluxo de cadastro
+        acessível tanto para cuidadores quanto para familiares, servindo como
+        um primeiro passo para um sistema completo de gestão de cuidados para
+        idosos.
+      </p>
+    </section>
+  );
+}
