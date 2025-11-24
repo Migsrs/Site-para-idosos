@@ -10,14 +10,17 @@ import {
   writeLS,
   getUserByEmail,
   userSlug,
-  getAverageRatingForProvider,
 } from "../utils/storage";
 import { seedServices } from "../utils/seeds";
 import { PromoCarousel } from "./HomePage";
 
+// 🔥 Firestore (para média de avaliações)
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "../firebase";
+
 // =================== LISTAGEM DE SERVIÇOS ===================
 export function Services({ session }) {
-  const [query, setQuery] = useState("");
+  const [queryText, setQueryText] = useState("");
   const [services, setServices] = useState(
     () => readLS(LS_KEYS.services, null) ?? seedServices
   );
@@ -26,6 +29,7 @@ export function Services({ session }) {
   useEffect(() => {
     const current = readLS(LS_KEYS.services, null);
     if (!current) writeLS(LS_KEYS.services, services);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // roda uma vez
 
   // excluir serviço (apenas do dono)
@@ -47,7 +51,7 @@ export function Services({ session }) {
   };
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = queryText.trim().toLowerCase();
     if (!q) return services;
     return services.filter((s) =>
       [s.title, s.description, s.location, ...(s.tags || [])]
@@ -55,13 +59,13 @@ export function Services({ session }) {
         .toLowerCase()
         .includes(q)
     );
-  }, [query, services]);
+  }, [queryText, services]);
 
   const isProvider = session?.role === "provider";
 
   return (
     <div className="mx-auto max-w-5xl px-4 pb-28 pt-4 md:pb-8">
-      <SearchBar value={query} onChange={(e) => setQuery(e.target.value)} />
+      <SearchBar value={queryText} onChange={(e) => setQueryText(e.target.value)} />
       <PromoCarousel />
 
       {filtered.length === 0 ? (
@@ -107,9 +111,52 @@ export function ServiceCard({
   const provider = getUserByEmail(service.ownerEmail);
   const isOwner = canDelete && session?.email === service.ownerEmail;
 
-  // média das avaliações reais do prestador
-  const avgFromRatings = getAverageRatingForProvider(service.ownerEmail);
-  const ratingToShow = avgFromRatings || service.rating || null;
+  // 🔥 média das avaliações reais do prestador no Firestore
+  const [avgRating, setAvgRating] = useState(null);
+  const [loadingRating, setLoadingRating] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const fetchAvg = async () => {
+      if (!service.ownerEmail) return;
+      try {
+        setLoadingRating(true);
+        const q = query(
+          collection(db, "ratings"),
+          where("providerEmail", "==", service.ownerEmail)
+        );
+        const snap = await getDocs(q);
+
+        let sum = 0;
+        let count = 0;
+        snap.forEach((docSnap) => {
+          const data = docSnap.data();
+          const stars = Number(data.stars || 0);
+          if (!Number.isNaN(stars) && stars > 0) {
+            sum += stars;
+            count += 1;
+          }
+        });
+
+        const avg = count > 0 ? sum / count : null;
+        if (active) setAvgRating(avg);
+      } catch (err) {
+        console.error("Erro ao buscar média de avaliações no Firestore:", err);
+        if (active) setAvgRating(null);
+      } finally {
+        if (active) setLoadingRating(false);
+      }
+    };
+
+    fetchAvg();
+    return () => {
+      active = false;
+    };
+  }, [service.ownerEmail]);
+
+  // se não tiver no Firestore, usa o rating estático do serviço (seed)
+  const ratingToShow =
+    avgRating != null ? avgRating : service.rating != null ? service.rating : null;
 
   return (
     <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
@@ -204,7 +251,11 @@ export function ServiceCard({
           ))}
           <span className="ml-auto inline-flex items-center gap-1 text-amber-600">
             <Star className="h-4 w-4" />
-            {ratingToShow ? ratingToShow.toFixed(1) : "-"}
+            {loadingRating
+              ? "…"
+              : ratingToShow != null
+              ? ratingToShow.toFixed(1)
+              : "-"}
           </span>
         </div>
 
@@ -322,9 +373,7 @@ function ServiceForm({ form, setForm, onSubmit, title }) {
             >
               Cancelar
             </Link>
-            <Button type="submit">
-              Salvar
-            </Button>
+            <Button type="submit">Salvar</Button>
           </div>
         </form>
       </Card>

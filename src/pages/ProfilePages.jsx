@@ -1,5 +1,5 @@
 // src/pages/ProfilePages.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import {
   getUserByEmail,
@@ -8,18 +8,23 @@ import {
   calcAge,
   LS_KEYS,
   readLS,
-  writeLS,
-  getRatingsForProvider,
   calcAverageRating,
 } from "../utils/storage";
 import { Button, Card, Input, Textarea } from "../components/ui";
-import {
-  User,
-  ExternalLink,
-  Image as ImageIcon,
-  Star,
-} from "lucide-react";
+import { User, ExternalLink, Image as ImageIcon, Star } from "lucide-react";
 import { ServiceCard } from "./ServicesPages";
+
+// 🔥 Firestore (para avaliações)
+import {
+  collection,
+  doc,
+  getDocs,
+  query,
+  where,
+  setDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+import { db } from "../firebase";
 
 // ---------- MINHA CONTA ----------
 export function Account({ session, onLogout }) {
@@ -333,11 +338,37 @@ export function PublicProfile({ session }) {
     (s) => u && s.ownerEmail === u.email
   );
 
-  const [ratings, setRatings] = useState(
-    () => (u ? getRatingsForProvider(u.email) : [])
-  );
+  const [ratings, setRatings] = useState([]);
   const [stars, setStars] = useState(5);
   const [comment, setComment] = useState("");
+  const [loadingRatings, setLoadingRatings] = useState(false);
+
+  // 🔥 Busca avaliações no Firestore sempre que mudar o profissional
+  useEffect(() => {
+    if (!u?.email) return;
+
+    const fetchRatings = async () => {
+      try {
+        setLoadingRatings(true);
+        const q = query(
+          collection(db, "ratings"),
+          where("providerEmail", "==", u.email)
+        );
+        const snap = await getDocs(q);
+        const list = snap.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+        }));
+        setRatings(list);
+      } catch (err) {
+        console.error("Erro ao buscar avaliações no Firestore:", err);
+      } finally {
+        setLoadingRatings(false);
+      }
+    };
+
+    fetchRatings();
+  }, [u?.email]);
 
   if (!u || u.role !== "provider") {
     return (
@@ -368,44 +399,50 @@ export function PublicProfile({ session }) {
   const canRate =
     isLogged && session.role === "client" && session.email !== u.email;
 
-  const handleRatingSubmit = (e) => {
+  const handleRatingSubmit = async (e) => {
     e.preventDefault();
     if (!canRate) {
       alert("Apenas clientes logados podem avaliar este profissional.");
       return;
     }
 
-    const all = readLS(LS_KEYS.ratings, []);
-    const existingIndex = all.findIndex(
-      (r) => r.providerEmail === u.email && r.authorEmail === session.email
-    );
-
     const trimmedComment = comment.trim();
 
-    const payload = {
-      id:
-        existingIndex !== -1
-          ? all[existingIndex].id
-          : crypto.randomUUID(),
-      providerEmail: u.email,
-      authorEmail: session.email,
-      authorName: session.name || session.email,
-      stars,
-      comment: trimmedComment,
-      createdAt:
-        existingIndex !== -1
-          ? all[existingIndex].createdAt
-          : new Date().toISOString(),
-    };
+    try {
+      // id composto para garantir UMA avaliação por cliente/provedor
+      const ratingId = `${u.email}__${session.email}`;
+      const ref = doc(collection(db, "ratings"), ratingId);
 
-    if (existingIndex === -1) all.push(payload);
-    else all[existingIndex] = payload;
+      const payload = {
+        providerEmail: u.email,
+        authorEmail: session.email,
+        authorName: session.name || session.email,
+        stars,
+        comment: trimmedComment,
+        updatedAt: serverTimestamp(),
+        // se o doc não existir, createdAt será setado; se existir, mantemos o antigo
+        createdAt: serverTimestamp(),
+      };
 
-    writeLS(LS_KEYS.ratings, all);
-    const ownRatings = all.filter((r) => r.providerEmail === u.email);
-    setRatings(ownRatings);
-    setComment("");
-    alert("Avaliação registrada com sucesso!");
+      await setDoc(ref, payload, { merge: true });
+
+      // Recarrega lista de avaliações
+      const q = query(
+        collection(db, "ratings"),
+        where("providerEmail", "==", u.email)
+      );
+      const snap = await getDocs(q);
+      const list = snap.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      }));
+      setRatings(list);
+      setComment("");
+      alert("Avaliação registrada com sucesso!");
+    } catch (err) {
+      console.error("Erro ao salvar avaliação no Firestore:", err);
+      alert("Não foi possível salvar a avaliação. Tente novamente em instantes.");
+    }
   };
 
   return (
@@ -438,6 +475,8 @@ export function PublicProfile({ session }) {
                 {avgRating.toFixed(1)} • {totalRatings} avaliação
                 {totalRatings > 1 ? "es" : ""}
               </span>
+            ) : loadingRatings ? (
+              <span>Carregando avaliações…</span>
             ) : (
               <span>Sem avaliações ainda</span>
             )}
@@ -530,7 +569,7 @@ export function PublicProfile({ session }) {
           </Card>
         )}
 
-        {ratings.length === 0 ? (
+        {ratings.length === 0 && !loadingRatings ? (
           <Card>
             <p className="text-gray-600 text-sm">
               Ainda não há avaliações para este profissional.
@@ -540,36 +579,48 @@ export function PublicProfile({ session }) {
           <div className="space-y-3">
             {ratings
               .slice()
-              .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-              .map((r) => (
-                <Card key={r.id} className="py-3 px-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <div className="text-sm font-semibold">
-                        {r.authorName || "Usuário"}
+              .sort((a, b) => {
+                const da = a.createdAt?.toDate
+                  ? a.createdAt.toDate()
+                  : new Date(a.createdAt);
+                const dbDate = b.createdAt?.toDate
+                  ? b.createdAt.toDate()
+                  : new Date(b.createdAt);
+                return dbDate - da;
+              })
+              .map((r) => {
+                const created =
+                  r.createdAt?.toDate?.() || new Date(r.createdAt);
+                return (
+                  <Card key={r.id} className="py-3 px-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <div className="text-sm font-semibold">
+                          {r.authorName || "Usuário"}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {created.toLocaleDateString()}
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-500">
-                        {new Date(r.createdAt).toLocaleDateString()}
+                      <div className="flex items-center gap-1 text-amber-500">
+                        {[1, 2, 3, 4, 5].map((v) => (
+                          <Star
+                            key={v}
+                            className={`h-4 w-4 ${
+                              v <= r.stars ? "fill-amber-400" : "fill-none"
+                            }`}
+                          />
+                        ))}
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 text-amber-500">
-                      {[1, 2, 3, 4, 5].map((v) => (
-                        <Star
-                          key={v}
-                          className={`h-4 w-4 ${
-                            v <= r.stars ? "fill-amber-400" : "fill-none"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  {r.comment && (
-                    <p className="mt-2 text-sm text-gray-700">
-                      {r.comment}
-                    </p>
-                  )}
-                </Card>
-              ))}
+                    {r.comment && (
+                      <p className="mt-2 text-sm text-gray-700">
+                        {r.comment}
+                      </p>
+                    )}
+                  </Card>
+                );
+              })}
           </div>
         )}
       </div>
