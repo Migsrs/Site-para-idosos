@@ -4,65 +4,50 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { MapPin, Star, Plus, Pencil, Trash2 } from "lucide-react";
 
 import { Button, Card, Input, Textarea, SearchBar } from "../components/ui";
-import { getUserByEmail, userSlug } from "../utils/storage";
+import {
+  LS_KEYS,
+  readLS,
+  writeLS,
+  getUserByEmail,
+  userSlug,
+} from "../utils/storage";
+import { seedServices } from "../utils/seeds";
 import { PromoCarousel } from "./HomePage";
 
-// 🔥 Firestore – média das avaliações
+// 🔥 Firestore (para média de avaliações)
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebase";
-
-// 🔥 Firestore – serviços (CRUD)
-import {
-  createService,
-  listAllServices,
-  updateService,
-  deleteService,
-} from "../services/firestoreServices";
 
 // =================== LISTAGEM DE SERVIÇOS ===================
 export function Services({ session }) {
   const [queryText, setQueryText] = useState("");
-  const [services, setServices] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [services, setServices] = useState(
+    () => readLS(LS_KEYS.services, null) ?? seedServices
+  );
 
-  // Carrega serviços do Firestore
+  // garante que os seeds sejam gravados se ainda não existir nada
   useEffect(() => {
-    let active = true;
-    async function load() {
-      try {
-        const list = await listAllServices();
-        if (active) {
-          setServices(list);
-        }
-      } catch (err) {
-        console.error("Erro ao carregar serviços do Firestore:", err);
-      } finally {
-        if (active) setLoading(false);
-      }
-    }
-    load();
-    return () => {
-      active = false;
-    };
-  }, []);
+    const current = readLS(LS_KEYS.services, null);
+    if (!current) writeLS(LS_KEYS.services, services);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // roda uma vez
 
-  // excluir serviço (apenas do dono) – agora no Firestore
-  const handleDelete = async (service) => {
-    if (!session || service.ownerEmail !== session.email) {
+  // excluir serviço (apenas do dono)
+  const handleDelete = (id) => {
+    const list = readLS(LS_KEYS.services, []);
+    const svc = list.find((s) => s.id === id);
+    if (!svc) return;
+
+    if (!session || svc.ownerEmail !== session.email) {
       alert("Você só pode excluir serviços que você publicou.");
       return;
     }
 
     if (!confirm("Tem certeza que deseja excluir este serviço?")) return;
 
-    try {
-      await deleteService(service.id);
-      setServices((prev) => prev.filter((s) => s.id !== service.id));
-      alert("Serviço excluído com sucesso!");
-    } catch (err) {
-      console.error("Erro ao excluir serviço no Firestore:", err);
-      alert("Não foi possível excluir o serviço. Tente novamente.");
-    }
+    const updated = list.filter((s) => s.id !== id);
+    writeLS(LS_KEYS.services, updated);
+    setServices(updated);
   };
 
   const filtered = useMemo(() => {
@@ -80,17 +65,10 @@ export function Services({ session }) {
 
   return (
     <div className="mx-auto max-w-5xl px-4 pb-28 pt-4 md:pb-8">
-      <SearchBar
-        value={queryText}
-        onChange={(e) => setQueryText(e.target.value)}
-      />
+      <SearchBar value={queryText} onChange={(e) => setQueryText(e.target.value)} />
       <PromoCarousel />
 
-      {loading ? (
-        <Card>
-          <p className="text-gray-600">Carregando serviços...</p>
-        </Card>
-      ) : filtered.length === 0 ? (
+      {filtered.length === 0 ? (
         <Card>
           <p className="text-gray-600">
             Nenhum serviço encontrado para sua busca.
@@ -104,7 +82,7 @@ export function Services({ session }) {
               service={s}
               session={session}
               canDelete={session?.email === s.ownerEmail}
-              onDelete={() => handleDelete(s)}
+              onDelete={() => handleDelete(s.id)}
               allowManage={true}
             />
           ))}
@@ -176,7 +154,7 @@ export function ServiceCard({
     };
   }, [service.ownerEmail]);
 
-  // se não tiver no Firestore, usa o rating estático do serviço (seed/backup)
+  // se não tiver no Firestore, usa o rating estático do serviço (seed)
   const ratingToShow =
     avgRating != null ? avgRating : service.rating != null ? service.rating : null;
 
@@ -422,30 +400,31 @@ export function AddService({ session }) {
     cover: "",
   });
 
-  const onSubmit = async (e) => {
+  const onSubmit = (e) => {
     e.preventDefault();
 
-    try {
-      const payload = {
-        title: form.title.trim(),
-        description: form.description.trim(),
-        hourlyPrice: Number(form.hourlyPrice || 0),
-        remote: !!form.remote,
-        location: form.remote ? "Remoto" : form.location.trim(),
-        tags: form.tags
-          .split(",")
-          .map((t) => t.trim())
-          .filter(Boolean),
-        cover: form.cover.trim(),
-      };
+    const list = readLS(LS_KEYS.services, seedServices);
 
-      await createService(payload, session);
-      alert("Serviço adicionado!");
-      navigate("/services");
-    } catch (err) {
-      console.error("Erro ao criar serviço no Firestore:", err);
-      alert("Não foi possível adicionar o serviço. Tente novamente.");
-    }
+    const payload = {
+      id: crypto.randomUUID(),
+      title: form.title.trim(),
+      description: form.description.trim(),
+      hourlyPrice: Number(form.hourlyPrice || 0),
+      remote: !!form.remote,
+      location: form.remote ? "Remoto" : form.location.trim(),
+      tags: form.tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean),
+      ownerEmail: session?.email,
+      ownerName: session?.name || session?.email,
+      rating: 5,
+      cover: form.cover.trim(),
+    };
+
+    writeLS(LS_KEYS.services, [payload, ...list]);
+    alert("Serviço adicionado!");
+    navigate("/services");
   };
 
   return (
@@ -463,94 +442,57 @@ export function EditService({ session }) {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [form, setForm] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const list = readLS(LS_KEYS.services, seedServices);
+  const existing = list.find((s) => s.id === id);
 
   useEffect(() => {
-    let active = true;
-
-    async function load() {
-      try {
-        const all = await listAllServices();
-        const existing = all.find((s) => s.id === id);
-
-        if (!existing) {
-          alert("Serviço não encontrado.");
-          navigate("/services");
-          return;
-        }
-
-        if (!session || existing.ownerEmail !== session.email) {
-          alert("Você só pode editar serviços que você publicou.");
-          navigate("/services");
-          return;
-        }
-
-        if (!active) return;
-
-        setForm({
-          title: existing.title || "",
-          description: existing.description || "",
-          hourlyPrice: existing.hourlyPrice || "",
-          remote: !!existing.remote,
-          // se for remoto, deixo location em branco para não confundir
-          location: existing.remote ? "" : existing.location || "",
-          tags: Array.isArray(existing.tags)
-            ? existing.tags.join(", ")
-            : existing.tags || "",
-          cover: existing.cover || "",
-        });
-      } catch (err) {
-        console.error("Erro ao carregar serviço para edição:", err);
-        alert("Não foi possível carregar o serviço.");
-        navigate("/services");
-      } finally {
-        if (active) setLoading(false);
-      }
-    }
-
-    load();
-    return () => {
-      active = false;
-    };
-  }, [id, session, navigate]);
-
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    if (!form) return;
-
-    try {
-      const payload = {
-        title: form.title.trim(),
-        description: form.description.trim(),
-        hourlyPrice: Number(form.hourlyPrice || 0),
-        remote: !!form.remote,
-        location: form.remote ? "Remoto" : form.location.trim(),
-        tags: form.tags
-          .split(",")
-          .map((t) => t.trim())
-          .filter(Boolean),
-        cover: form.cover.trim(),
-      };
-
-      await updateService(id, payload);
-      alert("Serviço atualizado!");
+    if (!existing) {
+      alert("Serviço não encontrado.");
       navigate("/services");
-    } catch (err) {
-      console.error("Erro ao atualizar serviço no Firestore:", err);
-      alert("Não foi possível atualizar o serviço. Tente novamente.");
+      return;
     }
-  };
+    if (!session || existing.ownerEmail !== session.email) {
+      alert("Você só pode editar serviços que você publicou.");
+      navigate("/services");
+    }
+  }, [existing, session, navigate]);
 
-  if (loading || !form) {
-    return (
-      <div className="mx-auto max-w-2xl px-4 pb-24 pt-4 md:pb-8">
-        <Card>
-          <p className="text-gray-600">Carregando serviço...</p>
-        </Card>
-      </div>
+  const [form, setForm] = useState(
+    existing || {
+      title: "",
+      description: "",
+      hourlyPrice: "",
+      remote: false,
+      location: "",
+      tags: "",
+      cover: "",
+    }
+  );
+
+  const onSubmit = (e) => {
+    e.preventDefault();
+    const updated = list.map((s) =>
+      s.id === id
+        ? {
+            ...s,
+            title: form.title.trim(),
+            description: form.description.trim(),
+            hourlyPrice: Number(form.hourlyPrice || 0),
+            remote: !!form.remote,
+            location: form.remote ? "Remoto" : form.location.trim(),
+            tags: form.tags
+              .split(",")
+              .map((t) => t.trim())
+              .filter(Boolean),
+            cover: form.cover.trim(),
+          }
+        : s
     );
-  }
+
+    writeLS(LS_KEYS.services, updated);
+    alert("Serviço atualizado!");
+    navigate("/services");
+  };
 
   return (
     <ServiceForm
