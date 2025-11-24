@@ -20,7 +20,7 @@ function HeroSection() {
   return (
     <div className="relative mb-6 overflow-hidden rounded-3xl">
       <img
-        src="img/Cuidados.jpg"
+        src="/img/Cuidados.jpg"
         alt="Cuidados com idosos"
         className="h-60 w-full object-cover md:h-72"
       />
