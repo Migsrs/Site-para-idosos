@@ -139,11 +139,15 @@ function Tile({ icon: Icon, title, subtitle }) {
         <div className="rounded-2xl bg-amber-50 p-2 text-amber-600">
           <Icon className="h-6 w-6" />
         </div>
-        <div>
-          <div className="text-sm font-semibold">{title}</div>
+        <div className="min-w-0">
+          {/* título ligeiramente menor e quebrando linha no mobile */}
+          <div className="break-words text-[13px] font-semibold leading-snug sm:text-sm">
+            {title}
+          </div>
           <div className="text-xs text-gray-500">{subtitle}</div>
         </div>
       </div>
     </div>
   );
 }
+

@@ -147,7 +147,7 @@ export function BottomTabs({ session }) {
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur md:hidden">
       <div className="mx-auto grid max-w-5xl grid-cols-3 px-2 py-2 text-xs">
         <TabLink
-          to="/services"
+          to="/"
           label="Início"
           icon={Home}
           active={is("/services") || loc.pathname === "/"}
